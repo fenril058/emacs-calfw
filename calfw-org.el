@@ -183,27 +183,28 @@ For example,
     (when (string-match (concat "^" org-deadline-string ".*") extra)
       (add-text-properties 0 (length text) (list 'face (org-agenda-deadline-face 1.0)) text))
     (if org-todo-keywords-for-agenda
-      (when (string-match (concat "^[\t ]*\\<\\(" (mapconcat 'identity org-todo-keywords-for-agenda "\\|") "\\)\\>") text)
-        (add-text-properties (match-beginning 1) (match-end 1) (list 'face (org-get-todo-face (match-string 1 text))) text)))
+        (when (string-match (concat "^[\t ]*\\<\\(" (mapconcat 'identity org-todo-keywords-for-agenda "\\|") "\\)\\>") text)
+          (add-text-properties (match-beginning 1) (match-end 1) (list 'face (org-get-todo-face (match-string 1 text))) text)))
     ;;; ------------------------------------------------------------------------
     ;;; act for org link
     ;;; ------------------------------------------------------------------------
     (setq text (replace-regexp-in-string "%[0-9A-F]\\{2\\}" " " text))
     (if (string-match org-bracket-link-regexp text)
-      (let* ((desc (if (match-end 3) (org-match-string-no-properties 3 text)))
-             (link (org-link-unescape (org-match-string-no-properties 1 text)))
-             (help (concat "LINK: " link))
-             (link-props (list
-                          'face 'org-link
-                          'mouse-face 'highlight
-                          'help-echo help
-                          'org-link link)))
-        (if desc
-            (progn
-              (setq desc (apply 'propertize desc link-props))
-              (setq text (replace-match desc nil nil text)))
-          (setq link (apply 'propertize link link-props))
-          (setq text (replace-match link nil nil text)))))
+        ;; https://github.com/kiwanami/emacs-calfw/pull/141/files
+        (let* ((desc (if (match-end 2) (org-match-string-no-properties 2 text)))
+               (link (org-link-unescape (org-match-string-no-properties 1 text)))
+               (help (concat "LINK: " link))
+               (link-props (list
+                            'face 'org-link
+                            'mouse-face 'highlight
+                            'help-echo help
+                            'org-link link)))
+          (if desc
+              (progn
+                (setq desc (apply 'propertize desc link-props))
+                (setq text (replace-match desc nil nil text)))
+            (setq link (apply 'propertize link link-props))
+            (setq text (replace-match link nil nil text)))))
     (when time-str
       (setq text (concat time-str text)))
     (propertize
