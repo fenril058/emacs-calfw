@@ -1,4 +1,4 @@
-;;; calfw-cal.el --- calendar view for emacs diary
+;;; calfw-cal.el --- calendar view for emacs diary    -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2011  SAKURAI Masashi
 
@@ -36,6 +36,7 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'cl-lib))
 (require 'calfw)
 (require 'calendar)
 
@@ -49,7 +50,7 @@
 
 (defun cfw:cal-entry-to-event (date string)
   "[internal] Add text properties to string, allowing calfw to act on it."
-  (let* ((lines      (split-string 
+  (let* ((lines      (split-string
                       (replace-regexp-in-string
                        "[\t ]+" " " (cfw:trim string))
                       "\n"))
@@ -62,7 +63,7 @@
          (end        (match-string 2 first))
          (properties (list 'mouse-face 'highlight
                            'help-echo string
-                           'cfw-marker (copy-marker (point-at-bol)))))
+                           'cfw-marker (copy-marker (line-beginning-position)))))
     (make-cfw:event :title       (apply 'propertize title properties)
                     :start-date  date
                     :start-time  (when start
@@ -94,53 +95,53 @@ from the diary schedule data."
               (1+ (cfw:days-diff begin end)) t))
         non-periods
         periods)
-    (loop for i in all
-          for date = (car i)
-          for title = (nth 1 i)
-          for date-spec = (nth 2 i)
-          for dmarker = (nth 3 i)
-          for pspec = (cons date-spec title)
-          do
-          (if (string-match "%%(diary-block" date-spec)
-              (unless (member pspec periods)
-                (push pspec periods))
-            (push i non-periods)))
+    (cl-loop for i in all
+             ;; for date = (car i)
+             for title = (nth 1 i)
+             for date-spec = (nth 2 i)
+             ;; for dmarker = (nth 3 i)
+             for pspec = (cons date-spec title)
+             do
+             (if (string-match "%%(diary-block" date-spec)
+                 (unless (member pspec periods)
+                   (push pspec periods))
+               (push i non-periods)))
     (append
-     (loop
+     (cl-loop
       for (date string . rest) in non-periods
       collect (cfw:cal-entry-to-event date string))
      (list (cons 'periods
-                 (map 'list (function (lambda (period)
-                                        (let ((spec (read (substring (car period) 2))))
-                                          (cond
-                                           ((eq calendar-date-style 'american)
-                                            (list
-                                             (list (nth 1 spec)
-                                                   (nth 2 spec)
-                                                   (nth 3 spec))
-                                             (list (nth 4 spec)
-                                                   (nth 5 spec)
-                                                   (nth 6 spec))
-                                             (cdr period)))
-                                           ((eq calendar-date-style 'european)
-                                            (list
-                                             (list (nth 2 spec)
-                                                   (nth 1 spec)
-                                                   (nth 3 spec))
-                                             (list (nth 5 spec)
-                                                   (nth 4 spec)
-                                                   (nth 6 spec))
-                                             (cdr period)))
-                                           ((eq calendar-date-style 'iso)
-                                            (list
-                                             (list (nth 2 spec)
-                                                   (nth 3 spec)
-                                                   (nth 1 spec))
-                                             (list (nth 5 spec)
-                                                   (nth 6 spec)
-                                                   (nth 4 spec))
-                                             (cdr period)))))))
-                      periods))))))
+                 (cl-map 'list (function (lambda (period)
+                                           (let ((spec (read (substring (car period) 2))))
+                                             (cond
+                                              ((eq calendar-date-style 'american)
+                                               (list
+                                                (list (nth 1 spec)
+                                                      (nth 2 spec)
+                                                      (nth 3 spec))
+                                                (list (nth 4 spec)
+                                                      (nth 5 spec)
+                                                      (nth 6 spec))
+                                                (cdr period)))
+                                              ((eq calendar-date-style 'european)
+                                               (list
+                                                (list (nth 2 spec)
+                                                      (nth 1 spec)
+                                                      (nth 3 spec))
+                                                (list (nth 5 spec)
+                                                      (nth 4 spec)
+                                                      (nth 6 spec))
+                                                (cdr period)))
+                                              ((eq calendar-date-style 'iso)
+                                               (list
+                                                (list (nth 2 spec)
+                                                      (nth 3 spec)
+                                                      (nth 1 spec))
+                                                (list (nth 5 spec)
+                                                      (nth 6 spec)
+                                                      (nth 4 spec))
+                                                (cdr period)))))))
+                         periods))))))
 
 (defvar cfw:cal-schedule-map
   (cfw:define-keymap
@@ -150,6 +151,7 @@ from the diary schedule data."
      ))
   "Key map for the calendar buffer.")
 
+;;;###autoload
 (defun cfw:cal-create-source (&optional color)
   "Create diary calendar source."
   (make-cfw:source
@@ -157,6 +159,7 @@ from the diary schedule data."
    :color (or color "SaddleBrown")
    :data 'cfw:cal-schedule-period-to-calendar))
 
+;;;###autoload
 (defun cfw:open-diary-calendar ()
   "Open the diary schedule calendar in the new buffer."
   (interactive)
@@ -178,7 +181,7 @@ from the diary schedule data."
     (diary-make-entry (calendar-date-string (cfw:date m d y) t t))
     ))
 
-;; (progn (eval-current-buffer) (cfw:open-diary-calendar))
+;; (progn (eval-buffer) (cfw:open-diary-calendar))
 
 (provide 'calfw-cal)
 ;;; calfw-cal.el ends here
