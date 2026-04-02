@@ -110,16 +110,16 @@ argument.")
                        (seconds-to-time (+ 10 (* (howm-schedule-date i) 24 3600))))
            for (_ num type summary) = (calfw-howm--schedule-parse-line
                                        (howm-item-summary i))
-           for summary = (funcall calfw-howm-schedule-summary-transformer
+           for transformed-summary = (funcall calfw-howm-schedule-summary-transformer
                                   summary)
            do
            (cond
             ((and (string= type "@") (< 0 num))
-             (push (list date (calfw-date-after date (1- num)) summary) periods))
+             (push (list date (calfw-date-after date (1- num)) transformed-summary) periods))
             ((and (string= type "!") (< 0 num))
-             (push (list (calfw-date-before date (1- num)) date summary) periods))
+             (push (list (calfw-date-before date (1- num)) date transformed-summary) periods))
             (t
-             (setq contents (calfw--contents-add date summary contents))))
+             (setq contents (calfw--contents-add date transformed-summary contents))))
            finally return (nconc contents (list (cons 'periods periods)))))
 
 (defvar calfw-howm-schedule-map
